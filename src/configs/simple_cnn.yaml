@@ -1,0 +1,21 @@
+name: simple_cnn
+method: random
+metric:
+  goal: minimize
+  name: valid/loss_epoch
+parameters:
+  activation:
+    value: ReLU
+  dropout:
+    value: 0
+  batch_norm:
+    value: false
+  model:
+    value:
+      - name: conv
+        in_channels: 3
+        out_channels: 16
+        kernel_size: 3
+        stride: 1
+        padding: 1
+      - name: dropout

@@ -1,0 +1,11 @@
+torch
+torchvision
+torchaudio
+jupyter
+notebook
+onnx
+wandb
+tqdm
+lightning
+torchmetrics
+numpy
