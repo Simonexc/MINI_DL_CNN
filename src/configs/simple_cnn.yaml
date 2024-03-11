@@ -4,6 +4,10 @@ metric:
   goal: minimize
   name: valid/loss_epoch
 parameters:
+  model_name:
+    value: simple_cnn
+  input_size:
+    value: (3, 32, 32)
   activation:
     value: ReLU
   dropout:

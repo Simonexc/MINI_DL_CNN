@@ -1,17 +1,35 @@
 import argparse
 import wandb
 from lightning.pytorch.loggers import WandbLogger
+import lightning.pytorch as pl
 
 from settings import PROJECT
 from model import Net
+from dataset import CINICDataModule
 
 
 def train():
     wandb_logger = WandbLogger(project=PROJECT)
     config = wandb_logger.experiment.config
-    model = Net(config)
-    print(model)
 
+    cinic = CINICDataModule(wandb_logger, config)
+    cinic.prepare_data()
+    cinic.setup()
+
+    trainer = pl.Trainer(
+        logger=wandb_logger,  # W&B integration
+        log_every_n_steps=50,  # set the logging frequency
+        max_epochs=config.epochs,  # number of epochs
+    )
+
+    model = Net(config)
+    wandb_logger.watch(model, log="all", log_freq=50)
+
+    trainer.fit(model, cinic)
+
+    trainer.test(datamodule=cinic, ckpt_path=None)
+
+    wandb.finish()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
