@@ -7,7 +7,7 @@ parameters:
   model_name:
     value: simple_cnn
   epochs:
-    value: 50
+    value: 5
   num_classes:
     value: 10
   input_size:
@@ -56,17 +56,15 @@ parameters:
         out_features: 10
         add_activation: false
   learning_rate:
-    distribution: log_uniform_values
-    min: 0.0001
-    max: 0.1
+    value: 0.01
   dropout:
-    values: [0, 0.2, 0.3, 0.5]
+    value: 0
   batch_norm:
-    values: [false, true]
+    value: false
   optimizer:
-    values: [Adam, SGD]
+    value: Adam
   random_crop_add:
-    values: [false, true]
+    value: false
   random_crop_scale:
     distribution: uniform
     min: 0.05
@@ -76,20 +74,20 @@ parameters:
     min: 0.0
     max: 0.8
   random_flip_add:
-    values: [false, true]
+    value: false
   random_flip_prob:
     distribution: uniform
     min: 0.0
     max: 1.0
   random_rotation_add:
-    values: [false, true]
+    value: false
   random_rotation_degrees:
     distribution: q_uniform
     q: 1
     min: 0
     max: 180
   random_color_jitter_add:
-    values: [false, true]
+    value: false
   random_color_jitter_brightness:
     distribution: uniform
     min: 0
@@ -107,7 +105,7 @@ parameters:
     min: 0
     max: 0.5
   random_gaussian_blur_add:
-    values: [false, true]
+    value: false
   random_gaussian_blur_kernel_size:
     values: [3, 5, 7]
   random_gaussian_blur_sigma:

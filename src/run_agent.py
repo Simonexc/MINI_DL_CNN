@@ -6,6 +6,7 @@ import lightning.pytorch as pl
 from settings import PROJECT
 from model import Net
 from dataset import CINICDataModule
+from metrics import ImagePredictionLogger
 
 
 def train():
@@ -15,11 +16,15 @@ def train():
     cinic = CINICDataModule(wandb_logger, config)
     cinic.prepare_data()
     cinic.setup()
+    samples = next(iter(cinic.val_dataloader()))
+    import numpy as np
+    print(np.mean(samples[0].numpy(), axis=(0, 2, 3)), np.std(samples[0].numpy(), axis=(0, 2, 3)), np.max(samples[0].numpy(), axis=(0, 2, 3)), np.min(samples[0].numpy(), axis=(0, 2, 3)))
 
     trainer = pl.Trainer(
         logger=wandb_logger,  # W&B integration
         log_every_n_steps=50,  # set the logging frequency
         max_epochs=config.epochs,  # number of epochs
+        callbacks=[ImagePredictionLogger(samples, 20)]
     )
 
     model = Net(config)
@@ -30,6 +35,7 @@ def train():
     trainer.test(datamodule=cinic, ckpt_path=None)
 
     wandb.finish()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(

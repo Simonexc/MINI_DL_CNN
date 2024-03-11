@@ -15,47 +15,51 @@ class CINICDataModule(pl.LightningDataModule):
         self.logger = wandb_logger
         self.config = config
         self.transform = transforms.Compose([
-            transforms.Normalize(CINIC_MEAN, CINIC_STD),
+            #transforms.Normalize(CINIC_MEAN, CINIC_STD),
+            transforms.Normalize((0.1307,), (0.3081,))
         ])
         train_transform_list = []
-        if config.augmentation.random_crop.add:
+        """
+        if config.random_crop_add:
             train_transform_list.append(
                 transforms.RandomResizedCrop(
-                    32,
-                    config.augmentation.random_crop.scale,
-                    config.augmentation.random_crop.ratio,
+                    config.input_size[1:],
+                    (config.random_crop_scale, 1),
+                    (1 - config.random_crop_ratio, 1 + config.random_crop_ratio),
                 )
             )
 
-        train_transform_list.append(
-            transforms.RandomHorizontalFlip(config.augmentation.random_flip)
-        )
-        train_transform_list.append(
-            transforms.RandomVerticalFlip(config.augmentation.random_flip)
-        )
-        if config.augmentation.random_rotation.add:
+        if config.random_flip_add:
             train_transform_list.append(
-                transforms.RandomRotation(config.augmentation.random_rotation.degrees)
+                transforms.RandomHorizontalFlip(config.random_flip_prob)
+            )
+            train_transform_list.append(
+                transforms.RandomVerticalFlip(config.random_flip_prob)
+            )
+        if config.random_rotation_add:
+            train_transform_list.append(
+                transforms.RandomRotation(config.random_rotation_degrees)
             )
 
-        if config.augmentation.random_color_jitter.add:
+        if config.random_color_jitter_add:
             train_transform_list.append(
                 transforms.ColorJitter(
-                    config.augmentation.random_color_jitter.brightness,
-                    config.augmentation.random_color_jitter.contrast,
-                    config.augmentation.random_color_jitter.saturation,
-                    config.augmentation.random_color_jitter.hue,
+                    config.random_color_jitter_brightness,
+                    config.random_color_jitter_contrast,
+                    config.random_color_jitter_saturation,
+                    config.random_color_jitter_hue,
                 )
             )
 
-        if config.augmentation.gaussian_blur.add:
+        if config.random_gaussian_blur_add:
             train_transform_list.append(
                 transforms.GaussianBlur(
-                    config.augmentation.gaussian_blur.kernel_size,
-                    config.augmentation.gaussian_blur.sigma,
+                    config.random_gaussian_blur_kernel_size,
+                    config.random_gaussian_blur_sigma,
                 )
             )
-
+        """
+        train_transform_list.append(transforms.Normalize((0.1307,), (0.3081,)))#transforms.Normalize(CINIC_MEAN, CINIC_STD))
         self.train_transform = transforms.Compose(train_transform_list)
 
         self.data_dir = ""
@@ -63,14 +67,17 @@ class CINICDataModule(pl.LightningDataModule):
     def _read(self, split, is_train: bool = False):
         filename = split + ".pt"
         x, y = torch.load(os.path.join(self.data_dir, filename))
+        x = torch.unsqueeze(x.type(torch.float32) / 255, 1)
         if is_train:
             x = self.train_transform(x)
+        else:
+            x = self.transform(x)
 
-        return TensorDataset(self.transform(x), y)
+        return TensorDataset(x, y)
 
     def prepare_data(self):
         # download data, train then test
-        data_artifact = self.logger.use_artifact('cinic-data:latest')
+        data_artifact = self.logger.use_artifact('mnist-raw:latest')
         self.data_dir = data_artifact.download()
 
     def setup(self, stage=None):

@@ -161,5 +161,7 @@ cython_debug/
 src/wandb
 data/
 docker_setup/
+src/artifacts
+src/DL_PROJECT_CNN
 
 !/**/.gitkeep
