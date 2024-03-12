@@ -15,11 +15,10 @@ class CINICDataModule(pl.LightningDataModule):
         self.logger = wandb_logger
         self.config = config
         self.transform = transforms.Compose([
-            #transforms.Normalize(CINIC_MEAN, CINIC_STD),
-            transforms.Normalize((0.1307,), (0.3081,))
+            transforms.Normalize(CINIC_MEAN, CINIC_STD),
         ])
         train_transform_list = []
-        """
+
         if config.random_crop_add:
             train_transform_list.append(
                 transforms.RandomResizedCrop(
@@ -58,8 +57,8 @@ class CINICDataModule(pl.LightningDataModule):
                     config.random_gaussian_blur_sigma,
                 )
             )
-        """
-        train_transform_list.append(transforms.Normalize((0.1307,), (0.3081,)))#transforms.Normalize(CINIC_MEAN, CINIC_STD))
+
+        train_transform_list.append(transforms.Normalize(CINIC_MEAN, CINIC_STD))
         self.train_transform = transforms.Compose(train_transform_list)
 
         self.data_dir = ""
@@ -67,7 +66,6 @@ class CINICDataModule(pl.LightningDataModule):
     def _read(self, split, is_train: bool = False):
         filename = split + ".pt"
         x, y = torch.load(os.path.join(self.data_dir, filename))
-        x = torch.unsqueeze(x.type(torch.float32) / 255, 1)
         if is_train:
             x = self.train_transform(x)
         else:
@@ -77,21 +75,21 @@ class CINICDataModule(pl.LightningDataModule):
 
     def prepare_data(self):
         # download data, train then test
-        data_artifact = self.logger.use_artifact('mnist-raw:latest')
+        data_artifact = self.logger.use_artifact('cinic-data:latest')
         self.data_dir = data_artifact.download()
 
     def setup(self, stage=None):
         # we set up only relevant datasets when stage is specified
         if stage == 'fit' or stage is None:
-            self.mnist_train = self._read("training", is_train=True)
-            self.mnist_val = self._read("validation")
+            self.mnist_train = self._read("train", is_train=True)
+            self.mnist_val = self._read("valid")
         if stage == 'test' or stage is None:
             self.mnist_test = self._read("test")
 
     # we define a separate DataLoader for each of train/val/test
     def train_dataloader(self):
         mnist_train = DataLoader(
-            self.mnist_train, batch_size=self.config.batch_size, num_workers=4
+            self.mnist_train, batch_size=self.config.batch_size, num_workers=4, shuffle=True
         )
         return mnist_train
 

@@ -17,18 +17,16 @@ def train():
     cinic.prepare_data()
     cinic.setup()
     samples = next(iter(cinic.val_dataloader()))
-    import numpy as np
-    print(np.mean(samples[0].numpy(), axis=(0, 2, 3)), np.std(samples[0].numpy(), axis=(0, 2, 3)), np.max(samples[0].numpy(), axis=(0, 2, 3)), np.min(samples[0].numpy(), axis=(0, 2, 3)))
 
     trainer = pl.Trainer(
         logger=wandb_logger,  # W&B integration
-        log_every_n_steps=50,  # set the logging frequency
-        max_epochs=config.epochs,  # number of epochs
+        log_every_n_steps=5,  # set the logging frequency
+        max_epochs=5,  # number of epochs
         callbacks=[ImagePredictionLogger(samples, 20)]
     )
 
     model = Net(config)
-    wandb_logger.watch(model, log="all", log_freq=50)
+    wandb_logger.watch(model, log="all", log_freq=5)
 
     trainer.fit(model, cinic)
 

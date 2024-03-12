@@ -14,8 +14,6 @@ parameters:
     value: [3, 32, 32]
   activation:
     value: ReLU
-  loss_function:
-    value: nll_loss
   batch_size:
     value: 1024
   model:

@@ -9,3 +9,5 @@ tqdm
 lightning
 torchmetrics
 numpy
+pandas
+scikit-learn
