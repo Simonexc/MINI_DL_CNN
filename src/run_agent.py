@@ -22,7 +22,7 @@ def train():
         logger=wandb_logger,  # W&B integration
         log_every_n_steps=5,  # set the logging frequency
         max_epochs=config.epochs,  # number of epochs
-        callbacks=[ImagePredictionLogger(samples, 20)]
+        callbacks=[ImagePredictionLogger(samples, 10)]
     )
 
     model = Net(config)
@@ -46,7 +46,7 @@ if __name__ == '__main__':
         help="Sweep ID provided by sweep.py",
     )
     parser.add_argument(
-        "count",
+        "--count",
         type=int,
         default=None,
         help="Number of experiments to perform. Can be None to run indefinitely."

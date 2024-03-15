@@ -2,14 +2,16 @@ import lightning.pytorch as pl
 import wandb
 import torch
 from settings import CLASS_NAMES
+import numpy as np
 
 
 class ImagePredictionLogger(pl.Callback):
     def __init__(self, val_samples, num_samples):
         super().__init__()
         self.val_imgs, self.val_labels = val_samples
-        self.val_imgs = self.val_imgs[:num_samples]
-        self.val_labels = self.val_labels[:num_samples]
+        idxs = np.random.randint(0, len(val_samples)-1, size=num_samples)
+        self.val_imgs = self.val_imgs[idxs]
+        self.val_labels = self.val_labels[idxs]
 
     def on_validation_epoch_end(self, trainer, pl_module):
         val_imgs = self.val_imgs.to(device=pl_module.device)
