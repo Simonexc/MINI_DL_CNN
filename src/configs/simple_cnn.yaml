@@ -7,7 +7,7 @@ parameters:
   model_name:
     value: simple_cnn
   epochs:
-    value: 50
+    value: 20
   num_classes:
     value: 10
   input_size:
