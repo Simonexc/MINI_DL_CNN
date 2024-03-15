@@ -15,31 +15,50 @@ class Net(pl.LightningModule):
 
         self.model = self._process_model(config.model)
         # Metrics
-        """
-        self.accuracy = classification.MulticlassAccuracy(
-            num_classes=config.num_classes
-        )
-        self.conf_mat = classification.MulticlassConfusionMatrix(
-            num_classes=config.num_classes
-        )
-        self.f1 = classification.MulticlassF1Score(
-            num_classes=config.num_classes
-        )
-        self.precision = classification.MulticlassPrecision(
-            num_classes=config.num_classes
-        )
-        self.recall = classification.MulticlassRecall(
-            num_classes=config.num_classes
-        )
-        """
         self.test_probabilities = []
         self.test_true_values = []
-        self.train_acc = torchmetrics.Accuracy(task="multiclass",
-                                               num_classes=config.num_classes)
-        self.valid_acc = torchmetrics.Accuracy(task="multiclass",
-                                               num_classes=config.num_classes)
-        self.test_acc = torchmetrics.Accuracy(task="multiclass",
-                                              num_classes=config.num_classes)
+        self.train_acc = torchmetrics.Accuracy(
+            task="multiclass",
+            num_classes=config.num_classes,
+            average="weighted",
+        )
+        self.valid_acc = torchmetrics.Accuracy(
+            task="multiclass",
+            num_classes=config.num_classes,
+            average="weighted",
+        )
+        self.test_acc = torchmetrics.Accuracy(
+            task="multiclass",
+            num_classes=config.num_classes,
+            average="weighted",
+        )
+        self.train_prec = torchmetrics.Precision(
+            task="multiclass", num_classes=config.num_classes, average="weighted"
+        )
+        self.valid_prec = torchmetrics.Precision(
+            task="multiclass", num_classes=config.num_classes, average="weighted"
+        )
+        self.test_prec = torchmetrics.Precision(
+            task="multiclass", num_classes=config.num_classes, average="weighted"
+        )
+        self.train_recall = torchmetrics.Recall(
+            task="multiclass", num_classes=config.num_classes, average="weighted"
+        )
+        self.test_recall = torchmetrics.Recall(
+            task="multiclass", num_classes=config.num_classes, average="weighted"
+        )
+        self.valid_recall = torchmetrics.Recall(
+            task="multiclass", num_classes=config.num_classes, average="weighted"
+        )
+        self.train_f1score = torchmetrics.F1Score(
+            task="multiclass", num_classes=config.num_classes, average="weighted"
+        )
+        self.test_f1score = torchmetrics.F1Score(
+            task="multiclass", num_classes=config.num_classes, average="weighted"
+        )
+        self.valid_f1score = torchmetrics.F1Score(
+            task="multiclass", num_classes=config.num_classes, average="weighted"
+        )
 
     def _process_model(self, model_data):
         model = nn.Sequential()
@@ -134,10 +153,16 @@ class Net(pl.LightningModule):
         preds = torch.argmax(logits, 1)
 
         # logging metrics we calculated by hand
-        self.log('train/loss', loss, on_epoch=True)
+        self.log('train/loss', loss, on_epoch=True, on_step=True)
         # logging a pl.Metric
         self.train_acc(preds, ys)
-        self.log('train/acc', self.train_acc, on_epoch=True)
+        self.log('train/accuracy', self.train_acc, on_epoch=True, on_step=True)
+        self.train_prec(preds, ys)
+        self.log("train/precision", self.train_prec, on_epoch=True, on_step=True)
+        self.train_recall(preds, ys)
+        self.log("train/recall", self.train_recall, on_epoch=True, on_step=True)
+        self.train_f1score(preds, ys)
+        self.log("train/f1_score", self.train_f1score, on_epoch=True, on_step=True)
         self.log("train/epoch", self.current_epoch)
 
         return loss
@@ -148,8 +173,14 @@ class Net(pl.LightningModule):
         preds = torch.argmax(logits, 1)
 
         self.test_acc(preds, ys)
-        self.log("test/loss_epoch", loss, on_step=False, on_epoch=True)
-        self.log("test/acc_epoch", self.test_acc, on_step=False, on_epoch=True)
+        self.log("test/loss", loss, on_step=False, on_epoch=True)
+        self.log("test/accuracy", self.test_acc, on_step=False, on_epoch=True)
+        self.test_prec(preds, ys)
+        self.log("test/precision", self.test_prec, on_epoch=True, on_step=False)
+        self.test_recall(preds, ys)
+        self.log("test/recall", self.test_recall, on_epoch=True, on_step=False)
+        self.test_f1score(preds, ys)
+        self.log("test/f1_score", self.test_f1score, on_epoch=True, on_step=False)
 
         self.test_probabilities.append(torch.exp(logits))
         self.test_true_values.append(ys)
@@ -160,8 +191,14 @@ class Net(pl.LightningModule):
         preds = torch.argmax(logits, 1)
         self.valid_acc(preds, ys)
 
-        self.log("valid/loss_epoch", loss)  # default on val/test is on_epoch only
-        self.log('valid/acc_epoch', self.valid_acc)
+        self.log("valid/loss", loss, on_epoch=True, on_step=False)
+        self.log('valid/accuracy', self.valid_acc, on_epoch=True, on_step=False)
+        self.valid_prec(preds, ys)
+        self.log("valid/precision", self.valid_prec, on_epoch=True, on_step=False)
+        self.valid_recall(preds, ys)
+        self.log("valid/recall", self.valid_recall, on_epoch=True, on_step=False)
+        self.valid_f1score(preds, ys)
+        self.log("valid/f1_score", self.valid_f1score, on_epoch=True, on_step=False)
         self.log("valid/epoch", self.current_epoch)
 
         return logits

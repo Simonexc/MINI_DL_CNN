@@ -21,7 +21,7 @@ def train():
     trainer = pl.Trainer(
         logger=wandb_logger,  # W&B integration
         log_every_n_steps=5,  # set the logging frequency
-        max_epochs=5,  # number of epochs
+        max_epochs=config.epochs,  # number of epochs
         callbacks=[ImagePredictionLogger(samples, 20)]
     )
 
