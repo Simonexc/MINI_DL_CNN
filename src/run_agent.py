@@ -3,7 +3,7 @@ import wandb
 from lightning.pytorch.loggers import WandbLogger
 import lightning.pytorch as pl
 
-from settings import PROJECT
+from settings import PROJECT, ENTITY
 from model import Net
 from dataset import CINICDataModule
 from metrics import ImagePredictionLogger
@@ -55,4 +55,5 @@ if __name__ == '__main__':
     # Parse the arguments
     args = parser.parse_args()
 
-    wandb.agent(args.sweep_id, train, count=args.count, project=PROJECT)
+    wandb.agent(args.sweep_id, train, count=args.count, project=PROJECT,
+                entity=ENTITY)
