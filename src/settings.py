@@ -1,3 +1,4 @@
+ENTITY = "dl-mini"
 PROJECT = "DL_PROJECT_CNN"
 
 # magic values from README

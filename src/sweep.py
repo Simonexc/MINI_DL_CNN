@@ -2,7 +2,7 @@ import wandb
 import yaml
 import argparse
 import os
-from settings import PROJECT
+from settings import PROJECT, ENTITY
 
 
 if __name__ == "__main__":
@@ -24,4 +24,4 @@ if __name__ == "__main__":
     with open(os.path.join("configs", f"{args.yaml_file}.yaml"), "r") as file:
         sweep_config = yaml.safe_load(file)
 
-    print(wandb.sweep(sweep_config, project=PROJECT))
+    print(wandb.sweep(sweep_config, entity=ENTITY, project=PROJECT))
