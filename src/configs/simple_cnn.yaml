@@ -7,7 +7,7 @@ parameters:
   model_name:
     value: simple_cnn
   epochs:
-    value: 20
+    value: 60
   num_classes:
     value: 10
   input_size:
@@ -112,3 +112,8 @@ parameters:
     distribution: uniform
     min: 0.1
     max: 1
+early_terminate:
+  type: hyperband
+  s: 2
+  eta: 3
+  max_iter: 60
