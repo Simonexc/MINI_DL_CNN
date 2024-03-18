@@ -2,6 +2,7 @@ from torch.nn import functional as F
 import torch
 import wandb
 from torch import nn
+from torchvision.models import (resnet50, vgg19, densenet121)
 import lightning.pytorch as pl
 import torchmetrics
 from settings import CLASS_NAMES
@@ -120,6 +121,38 @@ class Net(pl.LightningModule):
         if add_activation:
             self._add_activation(fc)
         model.append(fc)
+
+    def _add_resnet50(self, model: nn.Sequential):
+        resnet = resnet50(pretrained=True)
+        for param in resnet.parameters():  # freeze all conv layers
+            param.requires_grad = False
+        for param in resnet.fc.parameters():  # unfreeze classifier
+            param.requires_grad = True
+        resnet.fc = nn.Linear(in_features=resnet.fc.in_features,
+                              out_features=self.config.num_classes, bias=True)
+        model.append(resnet)
+
+    def _add_vgg19(self, model: nn.Sequential):
+        vgg = vgg19(pretrained=True)
+        for param in vgg.parameters():  # freeze all conv layers
+            param.requires_grad = False
+        for param in vgg.fc.parameters():  # unfreeze classifier
+            param.requires_grad = True
+        vgg.classifier._modules['6'] = nn.Linear(in_features=4096,
+                                                 out_features=self.config.num_classes,
+                                                 bias=True)
+        model.append(vgg)
+
+    def _add_densenet121(self, model: nn.Sequential):
+        densenet = densenet121(pretrained=True)
+        for param in densenet.parameters():  # freeze all conv layers
+            param.requires_grad = False
+        for param in densenet.classifier.parameters():  # unfreeze classifier
+            param.requires_grad = True
+        densenet.classifier = nn.Linear(in_features=1024,
+                                        out_features=self.config.num_classes,
+                                        bias=True)
+        model.append(densenet)
 
     def _save_model(self, filename):
         dummy_input = torch.zeros([1] + [3, 32, 32],
