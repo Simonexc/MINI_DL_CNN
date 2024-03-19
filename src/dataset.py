@@ -1,9 +1,10 @@
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import TensorDataset, DataLoader, default_collate
 import os
 import torchvision.transforms.v2 as transforms
 from lightning.pytorch.loggers import WandbLogger
 import torch
 import lightning.pytorch as pl
+import torch.nn.functional as F
 
 from settings import CINIC_STD, CINIC_MEAN
 
@@ -88,19 +89,52 @@ class CINICDataModule(pl.LightningDataModule):
 
     # we define a separate DataLoader for each of train/val/test
     def train_dataloader(self):
+        def collate_fn(batch):
+            if self.config.cutmix_add == "cut":
+                return transforms.CutMix(
+                    num_classes=self.config.num_classes
+                )(*default_collate(batch))
+            if self.config.cutmix_add == "mix":
+                return transforms.MixUp(
+                    num_classes=self.config.num_classes
+                )(*default_collate(batch))
+            return default_collate(batch)
+
         mnist_train = DataLoader(
-            self.mnist_train, batch_size=self.config.batch_size, num_workers=4, shuffle=True
+            self.mnist_train,
+            batch_size=self.config.batch_size,
+            num_workers=4,
+            shuffle=True,
+            collate_fn=collate_fn,
         )
         return mnist_train
 
     def val_dataloader(self):
+        def collate_fn(batch):
+            if self.config.cutmix_add == "none":
+                return default_collate(batch)
+            input, output = default_collate(batch)
+            return input, F.one_hot(output, num_classes=self.config.num_classes).float()
+
         mnist_val = DataLoader(
-            self.mnist_val, batch_size=10 * self.config.batch_size, num_workers=4
+            self.mnist_val,
+            batch_size=10 * self.config.batch_size,
+            num_workers=4,
+            collate_fn=collate_fn,
         )
         return mnist_val
 
     def test_dataloader(self):
+        def collate_fn(batch):
+            if self.config.cutmix_add == "none":
+                return default_collate(batch)
+            input, output = default_collate(batch)
+            return input, F.one_hot(output, num_classes=self.config.num_classes).float()
+
         mnist_test = DataLoader(
-            self.mnist_test, batch_size=10 * self.config.batch_size, num_workers=4
+            self.mnist_test,
+            batch_size=10 * self.config.batch_size,
+            num_workers=4,
+            collate_fn=collate_fn,
         )
         return mnist_test
