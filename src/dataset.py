@@ -110,31 +110,17 @@ class CINICDataModule(pl.LightningDataModule):
         return cinic_train
 
     def val_dataloader(self):
-        def collate_fn(batch):
-            if self.config.cutmix_add == "none":
-                return default_collate(batch)
-            input, output = default_collate(batch)
-            return input, F.one_hot(output, num_classes=self.config.num_classes).float()
-
         cinic_val = DataLoader(
             self.cinic_val,
             batch_size=10 * self.config.batch_size,
             num_workers=4,
-            #collate_fn=collate_fn,
         )
         return cinic_val
 
     def test_dataloader(self):
-        def collate_fn(batch):
-            if self.config.cutmix_add == "none":
-                return default_collate(batch)
-            input, output = default_collate(batch)
-            return input, F.one_hot(output, num_classes=self.config.num_classes).float()
-
         cinic_test = DataLoader(
             self.cinic_test,
             batch_size=10 * self.config.batch_size,
             num_workers=4,
-            #collate_fn=collate_fn,
         )
         return cinic_test
