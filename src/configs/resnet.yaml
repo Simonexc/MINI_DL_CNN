@@ -1,4 +1,4 @@
-name: resnet_cnn_test
+name: resnet_cnn
 method: random
 metric:
   goal: minimize
