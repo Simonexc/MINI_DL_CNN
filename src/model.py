@@ -105,11 +105,11 @@ class Net(pl.LightningModule, ConstructModelMixin):
         # Metrics
         self.test_probabilities = []
         self.test_true_values = []
-        self.train_acc = torchmetrics.Accuracy(
-            task="multiclass",
-            num_classes=config.num_classes,
-            average="weighted",
-        )
+        metric_train_params = {"average": "weighted"}
+        metric_train_params["task"] = "multiclass"
+        metric_train_params["num_classes"] = self.config.num_classes
+
+        self.train_acc = torchmetrics.Accuracy(**metric_train_params)
         self.valid_acc = torchmetrics.Accuracy(
             task="multiclass",
             num_classes=config.num_classes,
@@ -120,27 +120,21 @@ class Net(pl.LightningModule, ConstructModelMixin):
             num_classes=config.num_classes,
             average="weighted",
         )
-        self.train_prec = torchmetrics.Precision(
-            task="multiclass", num_classes=config.num_classes, average="weighted"
-        )
+        self.train_prec = torchmetrics.Precision(**metric_train_params)
         self.valid_prec = torchmetrics.Precision(
             task="multiclass", num_classes=config.num_classes, average="weighted"
         )
         self.test_prec = torchmetrics.Precision(
             task="multiclass", num_classes=config.num_classes, average="weighted"
         )
-        self.train_recall = torchmetrics.Recall(
-            task="multiclass", num_classes=config.num_classes, average="weighted"
-        )
+        self.train_recall = torchmetrics.Recall(**metric_train_params)
         self.test_recall = torchmetrics.Recall(
             task="multiclass", num_classes=config.num_classes, average="weighted"
         )
         self.valid_recall = torchmetrics.Recall(
             task="multiclass", num_classes=config.num_classes, average="weighted"
         )
-        self.train_f1score = torchmetrics.F1Score(
-            task="multiclass", num_classes=config.num_classes, average="weighted"
-        )
+        self.train_f1score = torchmetrics.F1Score(**metric_train_params)
         self.test_f1score = torchmetrics.F1Score(
             task="multiclass", num_classes=config.num_classes, average="weighted"
         )
@@ -156,7 +150,9 @@ class Net(pl.LightningModule, ConstructModelMixin):
             add_activation: bool = True,
             add_batch_norm: bool = True,
     ):
-        res_block = nn.Sequential(ResidualBlock(self.config, main_path_model, shortcut_path_model))
+        res_block = nn.Sequential(
+            ResidualBlock(self.config, main_path_model, shortcut_path_model)
+        )
         if add_activation and shortcut_path_model:
             self._add_activation(res_block)
         if self.config.batch_norm and add_batch_norm and shortcut_path_model:
@@ -164,29 +160,27 @@ class Net(pl.LightningModule, ConstructModelMixin):
         model.append(res_block)
 
     def _save_model(self, filename):
-        dummy_input = torch.zeros([1] + [3, 32, 32],
+        dummy_input = torch.zeros([1] + self.config.input_size,
                                   device=self.device)
-        artifact = wandb.Artifact(name="model_checkpoint", type="model",
+        full_filename = f"{filename}_{self.config.model_name}"
+        artifact = wandb.Artifact(name=full_filename, type="model",
                                   metadata={"epoch": self.current_epoch})
 
-        with artifact.new_file(filename, mode="wb") as file:
+        with artifact.new_file(full_filename + ".onnx", mode="wb") as file:
             torch.onnx.export(self, dummy_input, file)
 
         self.logger.experiment.log_artifact(artifact)
 
     def forward(self, x):
         x = self.model(x)
-        x = F.log_softmax(x, dim=1)
 
         return x
 
     def loss(self, x, y):
-        y_hat = self(x)  # calls forward
-        if self.config.cutmix_add == "none":
-            loss = F.nll_loss(y_hat, y)
-        else:
-            loss = F.binary_cross_entropy_with_logits(y_hat, y)
-        return y_hat, loss
+        logits = self(x)  # calls forward
+        loss = F.cross_entropy(logits, y)
+
+        return logits, loss
 
     def on_test_epoch_start(self):
         self.test_probabilities = []
@@ -194,8 +188,8 @@ class Net(pl.LightningModule, ConstructModelMixin):
 
     def training_step(self, batch, batch_idx):
         xs, ys = batch
-        logits, loss = self.loss(xs, ys)
-        preds = torch.argmax(logits, 1)
+        preds, loss = self.loss(xs, ys)
+        preds = torch.argmax(preds, 1)
         if self.config.cutmix_add != "none":
             ys = torch.argmax(ys, 1)
 
@@ -218,11 +212,9 @@ class Net(pl.LightningModule, ConstructModelMixin):
         xs, ys = batch
         logits, loss = self.loss(xs, ys)
         preds = torch.argmax(logits, 1)
-        if self.config.cutmix_add != "none":
-            ys = torch.argmax(ys, dim=1)
 
-        self.test_acc(preds, ys)
         self.log("test/loss", loss, on_step=False, on_epoch=True)
+        self.test_acc(preds, ys)
         self.log("test/accuracy", self.test_acc, on_step=False, on_epoch=True)
         self.test_prec(preds, ys)
         self.log("test/precision", self.test_prec, on_epoch=True, on_step=False)
@@ -238,11 +230,9 @@ class Net(pl.LightningModule, ConstructModelMixin):
         xs, ys = batch
         logits, loss = self.loss(xs, ys)
         preds = torch.argmax(logits, 1)
-        if self.config.cutmix_add != "none":
-            ys = torch.argmax(ys, dim=1)
-        self.valid_acc(preds, ys)
 
         self.log("valid/loss", loss, on_epoch=True, on_step=False)
+        self.valid_acc(preds, ys)
         self.log('valid/accuracy', self.valid_acc, on_epoch=True, on_step=False)
         self.valid_prec(preds, ys)
         self.log("valid/precision", self.valid_prec, on_epoch=True, on_step=False)
@@ -255,7 +245,7 @@ class Net(pl.LightningModule, ConstructModelMixin):
         return logits
 
     def on_test_epoch_end(self):
-        self._save_model("final_model")
+        self._save_model("final")
 
         flattened_probabilities = torch.flatten(
             torch.cat(self.test_probabilities)).view(-1, self.config.num_classes).to(
@@ -276,7 +266,7 @@ class Net(pl.LightningModule, ConstructModelMixin):
     def on_validation_epoch_end(self):
         if self.global_step == 0:
             return
-        self._save_model("checkpoint_model")
+        self._save_model("checkpoint")
 
     def configure_optimizers(self):
         kwargs = dict()

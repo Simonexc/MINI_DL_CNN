@@ -82,10 +82,10 @@ class CINICDataModule(pl.LightningDataModule):
     def setup(self, stage=None):
         # we set up only relevant datasets when stage is specified
         if stage == 'fit' or stage is None:
-            self.mnist_train = self._read("train", is_train=True)
-            self.mnist_val = self._read("valid")
+            self.cinic_train = self._read("train", is_train=True)
+            self.cinic_val = self._read("valid")
         if stage == 'test' or stage is None:
-            self.mnist_test = self._read("test")
+            self.cinic_test = self._read("test")
 
     # we define a separate DataLoader for each of train/val/test
     def train_dataloader(self):
@@ -100,14 +100,14 @@ class CINICDataModule(pl.LightningDataModule):
                 )(*default_collate(batch))
             return default_collate(batch)
 
-        mnist_train = DataLoader(
-            self.mnist_train,
+        cinic_train = DataLoader(
+            self.cinic_train,
             batch_size=self.config.batch_size,
             num_workers=4,
             shuffle=True,
             collate_fn=collate_fn,
         )
-        return mnist_train
+        return cinic_train
 
     def val_dataloader(self):
         def collate_fn(batch):
@@ -116,13 +116,13 @@ class CINICDataModule(pl.LightningDataModule):
             input, output = default_collate(batch)
             return input, F.one_hot(output, num_classes=self.config.num_classes).float()
 
-        mnist_val = DataLoader(
-            self.mnist_val,
+        cinic_val = DataLoader(
+            self.cinic_val,
             batch_size=10 * self.config.batch_size,
             num_workers=4,
-            collate_fn=collate_fn,
+            #collate_fn=collate_fn,
         )
-        return mnist_val
+        return cinic_val
 
     def test_dataloader(self):
         def collate_fn(batch):
@@ -131,10 +131,10 @@ class CINICDataModule(pl.LightningDataModule):
             input, output = default_collate(batch)
             return input, F.one_hot(output, num_classes=self.config.num_classes).float()
 
-        mnist_test = DataLoader(
-            self.mnist_test,
+        cinic_test = DataLoader(
+            self.cinic_test,
             batch_size=10 * self.config.batch_size,
             num_workers=4,
-            collate_fn=collate_fn,
+            #collate_fn=collate_fn,
         )
-        return mnist_test
+        return cinic_test
