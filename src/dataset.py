@@ -1,9 +1,10 @@
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import TensorDataset, DataLoader, default_collate
 import os
 import torchvision.transforms.v2 as transforms
 from lightning.pytorch.loggers import WandbLogger
 import torch
 import lightning.pytorch as pl
+import torch.nn.functional as F
 
 from settings import CINIC_STD, CINIC_MEAN
 
@@ -81,26 +82,45 @@ class CINICDataModule(pl.LightningDataModule):
     def setup(self, stage=None):
         # we set up only relevant datasets when stage is specified
         if stage == 'fit' or stage is None:
-            self.mnist_train = self._read("train", is_train=True)
-            self.mnist_val = self._read("valid")
+            self.cinic_train = self._read("train", is_train=True)
+            self.cinic_val = self._read("valid")
         if stage == 'test' or stage is None:
-            self.mnist_test = self._read("test")
+            self.cinic_test = self._read("test")
 
     # we define a separate DataLoader for each of train/val/test
     def train_dataloader(self):
-        mnist_train = DataLoader(
-            self.mnist_train, batch_size=self.config.batch_size, num_workers=4, shuffle=True
+        def collate_fn(batch):
+            if self.config.cutmix_add == "cut":
+                return transforms.CutMix(
+                    num_classes=self.config.num_classes
+                )(*default_collate(batch))
+            if self.config.cutmix_add == "mix":
+                return transforms.MixUp(
+                    num_classes=self.config.num_classes
+                )(*default_collate(batch))
+            return default_collate(batch)
+
+        cinic_train = DataLoader(
+            self.cinic_train,
+            batch_size=self.config.batch_size,
+            num_workers=4,
+            shuffle=True,
+            collate_fn=collate_fn,
         )
-        return mnist_train
+        return cinic_train
 
     def val_dataloader(self):
-        mnist_val = DataLoader(
-            self.mnist_val, batch_size=10 * self.config.batch_size, num_workers=4
+        cinic_val = DataLoader(
+            self.cinic_val,
+            batch_size=10 * self.config.batch_size,
+            num_workers=4,
         )
-        return mnist_val
+        return cinic_val
 
     def test_dataloader(self):
-        mnist_test = DataLoader(
-            self.mnist_test, batch_size=10 * self.config.batch_size, num_workers=4
+        cinic_test = DataLoader(
+            self.cinic_test,
+            batch_size=10 * self.config.batch_size,
+            num_workers=4,
         )
-        return mnist_test
+        return cinic_test

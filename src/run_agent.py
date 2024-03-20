@@ -16,13 +16,13 @@ def train():
     cinic = CINICDataModule(wandb_logger, config)
     cinic.prepare_data()
     cinic.setup()
-    samples = next(iter(cinic.val_dataloader()))
+    #samples = next(iter(cinic.val_dataloader()))
 
     trainer = pl.Trainer(
         logger=wandb_logger,  # W&B integration
         log_every_n_steps=5,  # set the logging frequency
         max_epochs=config.epochs,  # number of epochs
-        callbacks=[ImagePredictionLogger(samples, 10)]
+        #callbacks=[ImagePredictionLogger(samples, 10)]
     )
 
     model = Net(config)
