@@ -1,0 +1,131 @@
+name: resnet_cnn_sgd_norm_drop
+method: grid
+metric:
+  goal: minimize
+  name: valid_best/loss
+parameters:
+  model_name:
+    value: resnet_cnn
+  epochs:
+    value: 60
+  num_classes:
+    value: 10
+  input_size:
+    value: [3, 32, 32]
+  activation:
+    value: ReLU
+  batch_size:
+    value: 1024
+  model:
+    value:
+      - name: conv
+        in_channels: 3
+        out_channels: 16
+        kernel_size: 3
+        stride: 1
+        padding: 1
+      - name: dropout
+      - name: res_block
+        main_path_model:
+          - name: conv
+            in_channels: 16
+            out_channels: 16
+            kernel_size: 3
+            stride: 1
+            padding: 1
+          - name: dropout
+          - name: conv
+            in_channels: 16
+            out_channels: 16
+            kernel_size: 3
+            stride: 1
+            padding: 1
+            add_activation: false
+            add_batch_norm: false
+        shortcut_path_model: []
+      - name: dropout
+      - name: res_block
+        main_path_model:
+          - name: conv
+            in_channels: 16
+            out_channels: 32
+            kernel_size: 3
+            stride: 2
+            padding: 1
+          - name: dropout
+          - name: conv
+            in_channels: 32
+            out_channels: 32
+            kernel_size: 3
+            stride: 1
+            padding: 1
+            add_activation: false
+            add_batch_norm: false
+        shortcut_path_model:
+          - name: conv
+            in_channels: 16
+            out_channels: 32
+            kernel_size: 1
+            stride: 2
+            padding: 0
+            add_activation: false
+            add_batch_norm: false
+      - name: dropout
+      - name: res_block
+        main_path_model:
+          - name: conv
+            in_channels: 32
+            out_channels: 64
+            kernel_size: 3
+            stride: 2
+            padding: 1
+          - name: dropout
+          - name: conv
+            in_channels: 64
+            out_channels: 64
+            kernel_size: 3
+            stride: 1
+            padding: 1
+            add_activation: false
+            add_batch_norm: false
+        shortcut_path_model:
+          - name: conv
+            in_channels: 32
+            out_channels: 64
+            kernel_size: 1
+            stride: 2
+            padding: 0
+            add_activation: false
+            add_batch_norm: false
+        add_batch_norm: false
+      - name: avg_pool
+        kernel_size: 1
+      - name: flatten
+      - name: fc
+        in_features: 4096
+        out_features: 10
+        add_activation: false
+  learning_rate:
+    value: 0.08
+  beta1:
+    value: 0.774
+  l2_penalty:
+    value: 0.0057
+  dropout:
+    values: [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5]
+  batch_norm:
+    values: [false, true]
+  optimizer:
+    value: SGD
+  random_crop_add:
+    value: false
+  random_flip_add:
+    value: false
+  random_rotation_add:
+    value: false
+  random_color_jitter_add:
+    value: false
+  random_gaussian_blur_add:
+    value: false
+  cutmix_add:
+    value: none
