@@ -1,0 +1,125 @@
+name: vgg_deep_cnn_adam
+method: bayes
+metric:
+  goal: minimize
+  name: valid_best/loss
+parameters:
+  model_name:
+    value: vgg_deep_cnn
+  epochs:
+    value: 60
+  num_classes:
+    value: 10
+  input_size:
+    value: [3, 32, 32]
+  activation:
+    value: ReLU
+  batch_size:
+    value: 1024
+  model:
+    value:
+      - name: conv
+        in_channels: 3
+        out_channels: 32
+        kernel_size: 3
+        stride: 1
+        padding: 1
+      - name: dropout
+      - name: conv
+        in_channels: 32
+        out_channels: 32
+        kernel_size: 3
+        stride: 1
+        padding: 1
+      - name: dropout
+      - name: max_pool
+        kernel_size: 2
+      - name: conv
+        in_channels: 32
+        out_channels: 64
+        kernel_size: 3
+        stride: 1
+        padding: 1
+      - name: dropout
+      - name: conv
+        in_channels: 64
+        out_channels: 64
+        kernel_size: 3
+        stride: 1
+        padding: 1
+      - name: dropout
+      - name: conv
+        in_channels: 64
+        out_channels: 64
+        kernel_size: 3
+        stride: 1
+        padding: 1
+      - name: dropout
+      - name: max_pool
+        kernel_size: 2
+      - name: conv
+        in_channels: 64
+        out_channels: 128
+        kernel_size: 3
+        stride: 1
+        padding: 1
+      - name: dropout
+      - name: conv
+        in_channels: 128
+        out_channels: 128
+        kernel_size: 3
+        stride: 1
+        padding: 1
+      - name: dropout
+      - name: conv
+        in_channels: 128
+        out_channels: 128
+        kernel_size: 3
+        stride: 1
+        padding: 1
+      - name: dropout
+      - name: max_pool
+        kernel_size: 2
+      - name: dropout
+      - name: flatten
+      - name: fc
+        in_features: 2048
+        out_features: 128
+      - name: fc
+        in_features: 128
+        out_features: 10
+        add_activation: false
+  learning_rate:
+    distribution: log_uniform_values
+    min: 0.0001
+    max: 0.1
+  beta1:
+    distribution: log_uniform_values
+    min: 0.7
+    max: 0.99999
+  beta2:
+    distribution: log_uniform_values
+    min: 0.9
+    max: 0.999999
+  l2_penalty:
+    distribution: uniform
+    min: 0
+    max: 0.3
+  dropout:
+    value: 0
+  batch_norm:
+    value: false
+  optimizer:
+    value: Adam
+  random_crop_add:
+    value: false
+  random_flip_add:
+    value: false
+  random_rotation_add:
+    value: false
+  random_color_jitter_add:
+    value: false
+  random_gaussian_blur_add:
+    value: false
+  cutmix_add:
+    value: none

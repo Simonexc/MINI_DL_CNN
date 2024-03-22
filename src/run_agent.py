@@ -30,7 +30,11 @@ def train():
 
     trainer.fit(model, cinic)
 
-    trainer.test(datamodule=cinic, ckpt_path=None)
+    model.load_best_model()
+    model.is_validating_best_model = True
+    trainer.validate(model, cinic)
+
+    trainer.test(model, cinic)
 
     wandb.finish()
 

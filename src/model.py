@@ -1,11 +1,12 @@
 from torch.nn import functional as F
 import torch
-import wandb
+import numpy as np
 from torch import nn
 import lightning.pytorch as pl
 import torchmetrics
 from settings import CLASS_NAMES
 import wandb
+import os
 
 
 class ConstructModelMixin:
@@ -100,16 +101,19 @@ class Net(pl.LightningModule, ConstructModelMixin):
         super().__init__()
 
         self.config = config
+        self.is_validating_best_model = False
 
         self.model = self._construct_model(config.model)
         # Metrics
         self.test_probabilities = []
         self.test_true_values = []
-        metric_train_params = {"average": "weighted"}
-        metric_train_params["task"] = "multiclass"
-        metric_train_params["num_classes"] = self.config.num_classes
+        self.valid_losses = []
 
-        self.train_acc = torchmetrics.Accuracy(**metric_train_params)
+        self.train_acc = torchmetrics.Accuracy(
+            task="multiclass",
+            num_classes=config.num_classes,
+            average="weighted",
+        )
         self.valid_acc = torchmetrics.Accuracy(
             task="multiclass",
             num_classes=config.num_classes,
@@ -120,27 +124,36 @@ class Net(pl.LightningModule, ConstructModelMixin):
             num_classes=config.num_classes,
             average="weighted",
         )
-        self.train_prec = torchmetrics.Precision(**metric_train_params)
+        self.train_prec = torchmetrics.Precision(
+            task="multiclass", num_classes=config.num_classes, average="weighted"
+        )
         self.valid_prec = torchmetrics.Precision(
             task="multiclass", num_classes=config.num_classes, average="weighted"
         )
         self.test_prec = torchmetrics.Precision(
             task="multiclass", num_classes=config.num_classes, average="weighted"
         )
-        self.train_recall = torchmetrics.Recall(**metric_train_params)
+        self.train_recall = torchmetrics.Recall(
+            task="multiclass", num_classes=config.num_classes, average="weighted"
+        )
         self.test_recall = torchmetrics.Recall(
             task="multiclass", num_classes=config.num_classes, average="weighted"
         )
         self.valid_recall = torchmetrics.Recall(
             task="multiclass", num_classes=config.num_classes, average="weighted"
         )
-        self.train_f1score = torchmetrics.F1Score(**metric_train_params)
+        self.train_f1score = torchmetrics.F1Score(
+            task="multiclass", num_classes=config.num_classes, average="weighted"
+        )
         self.test_f1score = torchmetrics.F1Score(
             task="multiclass", num_classes=config.num_classes, average="weighted"
         )
         self.valid_f1score = torchmetrics.F1Score(
             task="multiclass", num_classes=config.num_classes, average="weighted"
         )
+
+        self.best_model_name = ""
+        self.lowest_valid_loss = float("inf")
 
     def _add_res_block(
             self,
@@ -168,8 +181,20 @@ class Net(pl.LightningModule, ConstructModelMixin):
 
         with artifact.new_file(full_filename + ".onnx", mode="wb") as file:
             torch.onnx.export(self, dummy_input, file)
+        with artifact.new_file(full_filename + ".pth", mode="wb") as file:
+            torch.save(self.state_dict(), file)
 
-        self.logger.experiment.log_artifact(artifact)
+        return self.logger.experiment.log_artifact(artifact)
+
+    def load_model(self, model_name: str):
+        artifact = self.logger.use_artifact(model_name)
+        model_file_name = model_name[:model_name.rfind(":")] + ".pth"
+        model_path = artifact.download(path_prefix=model_file_name)
+
+        self.load_state_dict(torch.load(os.path.join(model_path, model_file_name)))
+
+    def load_best_model(self):
+        self.load_model(self.best_model_name)
 
     def forward(self, x):
         x = self.model(x)
@@ -185,6 +210,9 @@ class Net(pl.LightningModule, ConstructModelMixin):
     def on_test_epoch_start(self):
         self.test_probabilities = []
         self.test_true_values = []
+
+    def on_validation_epoch_start(self):
+        self.valid_losses = []
 
     def training_step(self, batch, batch_idx):
         xs, ys = batch
@@ -230,17 +258,22 @@ class Net(pl.LightningModule, ConstructModelMixin):
         xs, ys = batch
         logits, loss = self.loss(xs, ys)
         preds = torch.argmax(logits, 1)
+        self.valid_losses.append(loss.cpu())
 
-        self.log("valid/loss", loss, on_epoch=True, on_step=False)
+        suffix = ""
+        if self.is_validating_best_model:
+            suffix = "_best"
+
+        self.log(f"valid{suffix}/loss", loss, on_epoch=True, on_step=False)
         self.valid_acc(preds, ys)
-        self.log('valid/accuracy', self.valid_acc, on_epoch=True, on_step=False)
+        self.log(f'valid{suffix}/accuracy', self.valid_acc, on_epoch=True, on_step=False)
         self.valid_prec(preds, ys)
-        self.log("valid/precision", self.valid_prec, on_epoch=True, on_step=False)
+        self.log(f"valid{suffix}/precision", self.valid_prec, on_epoch=True, on_step=False)
         self.valid_recall(preds, ys)
-        self.log("valid/recall", self.valid_recall, on_epoch=True, on_step=False)
+        self.log(f"valid{suffix}/recall", self.valid_recall, on_epoch=True, on_step=False)
         self.valid_f1score(preds, ys)
-        self.log("valid/f1_score", self.valid_f1score, on_epoch=True, on_step=False)
-        self.log("valid/epoch", self.current_epoch)
+        self.log(f"valid{suffix}/f1_score", self.valid_f1score, on_epoch=True, on_step=False)
+        self.log(f"valid{suffix}/epoch", self.current_epoch)
 
         return logits
 
@@ -264,9 +297,15 @@ class Net(pl.LightningModule, ConstructModelMixin):
         )
 
     def on_validation_epoch_end(self):
-        if self.global_step == 0:
+        if self.is_validating_best_model:
             return
-        self._save_model("checkpoint")
+        artifact = self._save_model("checkpoint")
+
+        avg_loss = np.mean(self.valid_losses)
+        if avg_loss < self.lowest_valid_loss:
+            self.lowest_valid_loss = avg_loss
+            artifact.wait()
+            self.best_model_name = artifact.name
 
     def configure_optimizers(self):
         kwargs = dict()
