@@ -1,0 +1,101 @@
+name: simple_cnn_adam_aug
+method: grid
+metric:
+  goal: minimize
+  name: valid_best/loss
+parameters:
+  model_name:
+    value: simple_cnn
+  epochs:
+    value: 60
+  num_classes:
+    value: 10
+  input_size:
+    value: [3, 32, 32]
+  activation:
+    value: ReLU
+  batch_size:
+    value: 1024
+  model:
+    value:
+      - name: conv
+        in_channels: 3
+        out_channels: 16
+        kernel_size: 3
+        stride: 1
+        padding: 1
+      - name: dropout
+      - name: max_pool
+        kernel_size: 2
+      - name: conv
+        in_channels: 16
+        out_channels: 32
+        kernel_size: 3
+        stride: 1
+        padding: 1
+      - name: dropout
+      - name: max_pool
+        kernel_size: 2
+      - name: conv
+        in_channels: 32
+        out_channels: 64
+        kernel_size: 3
+        stride: 1
+        padding: 1
+      - name: dropout
+      - name: max_pool
+        kernel_size: 2
+      - name: flatten
+      - name: fc
+        in_features: 1024
+        out_features: 64
+      - name: fc
+        in_features: 64
+        out_features: 10
+        add_activation: false
+  learning_rate:
+    value: 0.0016
+  beta1:
+    value: 0.84
+  beta2:
+    value: 0.947
+  l2_penalty:
+    value: 0.000794
+  dropout:
+    values: 0.15
+  batch_norm:
+    values: true
+  optimizer:
+    value: Adam
+  random_crop_add:
+    values: [false, true]
+  random_crop_scale:
+    value: 0.6
+  random_crop_ratio:
+    value: 0.2
+  random_flip_add:
+    values: [false, true]
+  random_flip_prob:
+    value: 0.5
+  random_rotation_add:
+    values: [false, true]
+  random_rotation_degrees:
+    value: 45
+  random_color_jitter_add:
+    values: [false, true]
+  random_color_jitter_brightness:
+    value: 0.2
+  random_color_jitter_contrast:
+    value: 0.2
+  random_color_jitter_saturation:
+    value: 0.2
+  random_color_jitter_hue:
+    value: 0.2
+  random_gaussian_blur_add:
+    values: [false, true]
+  random_gaussian_blur_kernel_size:
+    value: 5
+  random_gaussian_blur_sigma:
+    value: 0.3
+  cutmix_add:
+    values: [ none, cut, mix ]
