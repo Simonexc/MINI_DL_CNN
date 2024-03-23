@@ -4,7 +4,7 @@ from lightning.pytorch.loggers import WandbLogger
 import lightning.pytorch as pl
 
 from settings import PROJECT, ENTITY
-from model import Net
+import model as pl_model
 from dataset import CINICDataModule
 from metrics import ImagePredictionLogger
 
@@ -25,7 +25,7 @@ def train():
         #callbacks=[ImagePredictionLogger(samples, 10)]
     )
 
-    model = Net(config)
+    model = getattr(pl_model, getattr(config, "model_class", "Net"))(config)
     wandb_logger.watch(model, log="all", log_freq=5)
 
     trainer.fit(model, cinic)

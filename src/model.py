@@ -4,6 +4,7 @@ import numpy as np
 from torch import nn
 import lightning.pytorch as pl
 import torchmetrics
+import torchvision
 from settings import CLASS_NAMES
 import wandb
 import os
@@ -96,14 +97,16 @@ class ResidualBlock(nn.Module, ConstructModelMixin):
         return main_path + shortcut_path
 
 
-class Net(pl.LightningModule, ConstructModelMixin):
-    def __init__(self, config):
+class NetBase(pl.LightningModule):
+    model: nn.Module
+
+    def __init__(self, config, save_onnx: bool = True):
         super().__init__()
 
         self.config = config
         self.is_validating_best_model = False
+        self.save_onnx = save_onnx
 
-        self.model = self._construct_model(config.model)
         # Metrics
         self.test_probabilities = []
         self.test_true_values = []
@@ -155,23 +158,6 @@ class Net(pl.LightningModule, ConstructModelMixin):
         self.best_model_name = ""
         self.lowest_valid_loss = float("inf")
 
-    def _add_res_block(
-            self,
-            model: nn.Sequential,
-            main_path_model: list[dict],
-            shortcut_path_model: list[dict],
-            add_activation: bool = True,
-            add_batch_norm: bool = True,
-    ):
-        res_block = nn.Sequential(
-            ResidualBlock(self.config, main_path_model, shortcut_path_model)
-        )
-        if add_activation and shortcut_path_model:
-            self._add_activation(res_block)
-        if self.config.batch_norm and add_batch_norm and shortcut_path_model:
-            res_block.append(nn.BatchNorm2d(shortcut_path_model[-1]["out_channels"]))
-        model.append(res_block)
-
     def _save_model(self, filename):
         dummy_input = torch.zeros([1] + self.config.input_size,
                                   device=self.device)
@@ -179,8 +165,9 @@ class Net(pl.LightningModule, ConstructModelMixin):
         artifact = wandb.Artifact(name=full_filename, type="model",
                                   metadata={"epoch": self.current_epoch})
 
-        with artifact.new_file(full_filename + ".onnx", mode="wb") as file:
-            torch.onnx.export(self, dummy_input, file)
+        if self.save_onnx:
+            with artifact.new_file(full_filename + ".onnx", mode="wb") as file:
+                torch.onnx.export(self, dummy_input, file)
         with artifact.new_file(full_filename + ".pth", mode="wb") as file:
             torch.save(self.state_dict(), file)
 
@@ -320,3 +307,50 @@ class Net(pl.LightningModule, ConstructModelMixin):
             **kwargs
         )
 
+
+class Net(NetBase, ConstructModelMixin):
+    def __init__(self, config):
+        super().__init__(config)
+
+        self.model = self._construct_model(config.model)
+
+    def _add_res_block(
+            self,
+            model: nn.Sequential,
+            main_path_model: list[dict],
+            shortcut_path_model: list[dict],
+            add_activation: bool = True,
+            add_batch_norm: bool = True,
+    ):
+        res_block = nn.Sequential(
+            ResidualBlock(self.config, main_path_model, shortcut_path_model)
+        )
+        if add_activation and shortcut_path_model:
+            self._add_activation(res_block)
+        if self.config.batch_norm and add_batch_norm and shortcut_path_model:
+            res_block.append(nn.BatchNorm2d(shortcut_path_model[-1]["out_channels"]))
+        model.append(res_block)
+
+
+class ResNet(NetBase):
+    def __init__(self, config):
+        super().__init__(config)
+
+        self.model = torchvision.models.resnet50(weights=torchvision.models.ResNet50_Weights.DEFAULT)
+        for param in self.model.parameters():
+            param.requires_grad = False
+        self.model.fc = nn.Linear(
+            2048, config.num_classes
+        )
+
+
+class VGG(NetBase):
+    def __init__(self, config):
+        super().__init__(config, save_onnx=False)
+
+        self.model = torchvision.models.vgg19(weights=torchvision.models.VGG19_Weights.DEFAULT)
+        for param in self.model.parameters():
+            param.requires_grad = False
+        self.model.classifier[6] = nn.Linear(
+            4096, config.num_classes
+        )
