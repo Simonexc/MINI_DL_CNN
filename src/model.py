@@ -1,3 +1,5 @@
+import shutil
+
 from torch.nn import functional as F
 import torch
 import numpy as np
@@ -100,12 +102,13 @@ class ResidualBlock(nn.Module, ConstructModelMixin):
 class NetBase(pl.LightningModule):
     model: nn.Module
 
-    def __init__(self, config, save_onnx: bool = True):
+    def __init__(self, config, save_onnx: bool = True, upload_checkpoints: bool = True):
         super().__init__()
 
         self.config = config
         self.is_validating_best_model = False
         self.save_onnx = save_onnx
+        self.upload_checkpoints = upload_checkpoints
 
         # Metrics
         self.test_probabilities = []
@@ -158,6 +161,11 @@ class NetBase(pl.LightningModule):
         self.best_model_name = ""
         self.lowest_valid_loss = float("inf")
 
+        self.run_dir = "runs"
+        if os.path.exists(self.run_dir):
+            shutil.rmtree(self.run_dir)
+        os.mkdir(self.run_dir)
+
     def _save_model(self, filename):
         dummy_input = torch.zeros([1] + self.config.input_size,
                                   device=self.device)
@@ -173,15 +181,24 @@ class NetBase(pl.LightningModule):
 
         return self.logger.experiment.log_artifact(artifact)
 
+    def _save_locally(self):
+        path = os.path.join(self.run_dir, f"epoch_{self.current_epoch}.pth")
+        torch.save(self.state_dict(), path)
+
+        return path
+
+    def load_local(self, model_path: str):
+        self.load_state_dict(torch.load(model_path))
+
     def load_model(self, model_name: str):
         artifact = self.logger.use_artifact(model_name)
         model_file_name = model_name[:model_name.rfind(":")] + ".pth"
         model_path = artifact.download(path_prefix=model_file_name)
 
-        self.load_state_dict(torch.load(os.path.join(model_path, model_file_name)))
+        self.load_local(os.path.join(model_path, model_file_name))
 
     def load_best_model(self):
-        self.load_model(self.best_model_name)
+        self.load_local(self.best_model_name)
 
     def forward(self, x):
         x = self.model(x)
@@ -286,13 +303,14 @@ class NetBase(pl.LightningModule):
     def on_validation_epoch_end(self):
         if self.is_validating_best_model:
             return
-        artifact = self._save_model("checkpoint")
+        if self.upload_checkpoints:
+            artifact = self._save_model("checkpoint")
+        path = self._save_locally()
 
         avg_loss = np.mean(self.valid_losses)
         if avg_loss < self.lowest_valid_loss:
             self.lowest_valid_loss = avg_loss
-            artifact.wait()
-            self.best_model_name = artifact.name
+            self.best_model_name = path
 
     def configure_optimizers(self):
         kwargs = dict()
@@ -346,7 +364,7 @@ class ResNet(NetBase):
 
 class VGG(NetBase):
     def __init__(self, config):
-        super().__init__(config, save_onnx=False)
+        super().__init__(config, save_onnx=False, upload_checkpoints=False)
 
         self.model = torchvision.models.vgg19(weights=torchvision.models.VGG19_Weights.DEFAULT)
         for param in self.model.parameters():
