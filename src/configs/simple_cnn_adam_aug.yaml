@@ -62,9 +62,9 @@ parameters:
   l2_penalty:
     value: 0.000794
   dropout:
-    values: 0.15
+    value: 0.15
   batch_norm:
-    values: true
+    value: true
   optimizer:
     value: Adam
   random_crop_add:

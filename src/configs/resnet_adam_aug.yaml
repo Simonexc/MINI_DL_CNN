@@ -116,7 +116,7 @@ parameters:
   dropout:
     value: 0.15
   batch_norm:
-    values: true
+    value: true
   optimizer:
     value: Adam
   random_crop_add:
