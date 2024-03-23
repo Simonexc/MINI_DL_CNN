@@ -24,7 +24,7 @@ class CINICDataModule(pl.LightningDataModule):
             train_transform_list.append(
                 transforms.RandomResizedCrop(
                     config.input_size[1:],
-                    (config.random_crop_scale, 1),
+                    (1 - config.random_crop_scale, 1 + config.random_crop_scale),
                     (1 - config.random_crop_ratio, 1 + config.random_crop_ratio),
                 )
             )
