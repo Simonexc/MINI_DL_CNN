@@ -369,6 +369,8 @@ class VGG(NetBase):
         self.model = torchvision.models.vgg19(weights=torchvision.models.VGG19_Weights.DEFAULT)
         for param in self.model.parameters():
             param.requires_grad = False
+        for param in self.model.classifier.parameters():
+            param.requires_grad = True
         self.model.classifier[6] = nn.Linear(
             4096, config.num_classes
         )
