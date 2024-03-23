@@ -96,11 +96,11 @@ parameters:
   beta1:
     distribution: log_uniform_values
     min: 0.7
-    max: 0.99999
+    max: 0.99
   l2_penalty:
     distribution: uniform
     min: 0
-    max: 0.3
+    max: 0.01
   dropout:
     value: 0
   batch_norm:
