@@ -374,3 +374,18 @@ class VGG(NetBase):
         self.model.classifier[6] = nn.Linear(
             4096, config.num_classes
         )
+
+
+class VGG16(NetBase):
+    def __init__(self, config):
+        super().__init__(config, save_onnx=False, upload_checkpoints=False)
+
+        self.model = torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT)
+        for param in self.model.parameters():
+            param.requires_grad = False
+        for param in self.model.classifier.parameters():
+            param.requires_grad = True
+        self.model.classifier[6] = nn.Linear(
+            4096, config.num_classes
+        )
+
