@@ -1,4 +1,4 @@
-name: vgg_deep_cnn_aug
+name: vgg_deep_cnn_drop
 method: grid
 metric:
   goal: minimize
@@ -90,23 +90,23 @@ parameters:
   l2_penalty:
     value: 0.0058
   dropout:
-    value: 0.5
+    values: [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5]
   batch_norm:
     value: true
   optimizer:
     value: Adam
   random_crop_add:
-    values: [false, true]
+    value: false
   random_crop_scale:
     value: 0.2
   random_crop_ratio:
     value: 0.2
   random_flip_add:
-    values: [false, true]
+    value: false
   random_flip_prob:
     value: 0.5
   random_rotation_add:
-    values: [false, true]
+    value: false
   random_rotation_degrees:
     value: 30
   random_color_jitter_add:
@@ -114,4 +114,4 @@ parameters:
   random_gaussian_blur_add:
     value: false
   cutmix_add:
-    value: [none, mix, cut]
+    value: none
