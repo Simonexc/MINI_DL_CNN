@@ -1,0 +1,42 @@
+name: densenet
+method: random
+metric:
+  goal: minimize
+  name: valid_best/loss
+parameters:
+  model_name:
+    value: densenet
+  epochs:
+    value: 40
+  num_classes:
+    value: 10
+  input_size:
+    value: [3, 32, 32]
+  activation:
+    value: ReLU
+  batch_size:
+    value: 1024
+  model_class:
+    value: DenseNet
+  learning_rate:
+    value: 0.01
+  beta1:
+    value: 0.9
+  beta2:
+    value: 0.999
+  l2_penalty:
+    value: 0
+  optimizer:
+    value: Adam
+  random_crop_add:
+    value: false
+  random_flip_add:
+    value: false
+  random_rotation_add:
+    value: false
+  random_color_jitter_add:
+    value: false
+  random_gaussian_blur_add:
+    value: false
+  cutmix_add:
+    value: none

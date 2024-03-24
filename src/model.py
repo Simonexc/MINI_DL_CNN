@@ -389,3 +389,14 @@ class VGG16(NetBase):
             4096, config.num_classes
         )
 
+
+class DenseNet(NetBase):
+    def __init__(self, config):
+        super().__init__(config, save_onnx=False, upload_checkpoints=False)
+
+        self.model = torchvision.models.densenet121(weights=torchvision.models.DenseNet121_Weights.DEFAULT)
+        for param in self.model.parameters():
+            param.requires_grad = False
+        self.model.classifier = nn.Linear(
+            1024, config.num_classes
+        )
