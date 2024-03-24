@@ -1,5 +1,5 @@
 name: simple_cnn_fin
-method: grid
+method: random
 metric:
   goal: minimize
   name: valid_best/loss
