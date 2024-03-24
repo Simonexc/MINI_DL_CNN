@@ -1,13 +1,13 @@
-name: vgg19
+name: vgg16
 method: random
 metric:
   goal: minimize
   name: valid_best/loss
 parameters:
   model_name:
-    value: vgg19
+    value: vgg16
   epochs:
-    value: 20
+    value: 30
   num_classes:
     value: 10
   input_size:
@@ -29,14 +29,22 @@ parameters:
   optimizer:
     value: Adam
   random_crop_add:
-    value: false
+    value: true
+  random_crop_scale:
+    value: 0.2
+  random_crop_ratio:
+    value: 0.2
   random_flip_add:
     value: false
+  random_flip_prob:
+    value: 0.5
   random_rotation_add:
     value: false
+  random_rotation_degrees:
+    value: 20
   random_color_jitter_add:
     value: false
   random_gaussian_blur_add:
     value: false
   cutmix_add:
-    value: none
+    value: mix

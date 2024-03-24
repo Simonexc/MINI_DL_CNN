@@ -328,7 +328,7 @@ class NetBase(pl.LightningModule):
 
 class Net(NetBase, ConstructModelMixin):
     def __init__(self, config):
-        super().__init__(config)
+        super().__init__(config, upload_checkpoints=False)
 
         self.model = self._construct_model(config.model)
 

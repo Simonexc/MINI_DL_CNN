@@ -114,4 +114,4 @@ parameters:
   random_gaussian_blur_add:
     value: false
   cutmix_add:
-    value: [none, mix, cut]
+    values: [none, mix, cut]
