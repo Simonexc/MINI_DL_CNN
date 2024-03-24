@@ -163,5 +163,6 @@ data/
 docker_setup/
 src/artifacts
 src/DL_PROJECT_CNN
+src/runs
 
 !/**/.gitkeep
