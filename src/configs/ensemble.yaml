@@ -1,5 +1,5 @@
 name: ensemble
-method: random
+method: bayes
 metric:
   goal: minimize
   name: valid_best/loss
@@ -9,7 +9,7 @@ parameters:
   model_class:
     value: Ensemble
   epochs:
-    value: 60
+    value: 5
   num_classes:
     value: 10
   input_size:
@@ -25,13 +25,21 @@ parameters:
         out_features: 10
         add_activation: false
   learning_rate:
-    value: 0.001
+    distribution: log_uniform_values
+    min: 0.0001
+    max: 0.1
   beta1:
-    value: 0.9
+    distribution: log_uniform_values
+    min: 0.7
+    max: 0.99999
   beta2:
-    value: 0.999
+    distribution: log_uniform_values
+    min: 0.9
+    max: 0.999999
   l2_penalty:
-    value: 0
+    distribution: uniform
+    min: 0
+    max: 0.3
   dropout:
     value: 0.4
   batch_norm:

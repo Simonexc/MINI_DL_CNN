@@ -7,15 +7,15 @@ parameters:
   model_name:
     value: resnet50
   epochs:
-    value: 10
+    value: 20
   num_classes:
     value: 10
   input_size:
-    value: [3, 32, 32]
+    value: [3, 224, 224]
   activation:
     value: ReLU
   batch_size:
-    value: 1024
+    value: 128
   model_class:
     value: ResNet
   learning_rate:
@@ -29,7 +29,11 @@ parameters:
   optimizer:
     value: Adam
   random_crop_add:
-    value: false
+    value: true
+  random_crop_scale:
+    value: 0
+  random_crop_ratio:
+    value: 0
   random_flip_add:
     value: false
   random_rotation_add:

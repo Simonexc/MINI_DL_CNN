@@ -15,11 +15,11 @@ parameters:
   activation:
     value: ReLU
   batch_size:
-    value: 32
+    value: 64
   model_class:
     value: DenseNet
   learning_rate:
-    value: 0.01
+    value: 0.001
   beta1:
     value: 0.9
   beta2:
@@ -29,7 +29,11 @@ parameters:
   optimizer:
     value: Adam
   random_crop_add:
-    value: false
+    value: true
+  random_crop_scale:
+    value: 0
+  random_crop_ratio:
+    value: 0
   random_flip_add:
     value: false
   random_rotation_add:
