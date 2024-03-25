@@ -7,15 +7,15 @@ parameters:
   model_name:
     value: densenet
   epochs:
-    value: 40
+    value: 20
   num_classes:
     value: 10
   input_size:
-    value: [3, 32, 32]
+    value: [3, 224, 224]
   activation:
     value: ReLU
   batch_size:
-    value: 1024
+    value: 32
   model_class:
     value: DenseNet
   learning_rate:
