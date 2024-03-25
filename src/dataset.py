@@ -77,7 +77,7 @@ class CINICDataModule(pl.LightningDataModule):
 
             for i, c in enumerate(self.config.classes):
                 y[y == -CLASS_NAMES.index(c) - 1] = i
-            print(torch.min(y))
+
         if is_train:
             x = self.train_transform(x)
         else:
