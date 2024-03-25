@@ -10,6 +10,7 @@ import torchvision
 from settings import CLASS_NAMES
 import wandb
 import os
+import uuid
 
 
 class ConstructModelMixin:
@@ -161,7 +162,7 @@ class NetBase(pl.LightningModule):
         self.best_model_name = ""
         self.lowest_valid_loss = float("inf")
 
-        self.run_dir = "runs"
+        self.run_dir = f"runs_{uuid.uuid4().hex}"
         if os.path.exists(self.run_dir):
             shutil.rmtree(self.run_dir)
         os.mkdir(self.run_dir)

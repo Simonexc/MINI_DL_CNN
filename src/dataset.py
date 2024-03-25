@@ -17,6 +17,7 @@ class CINICDataModule(pl.LightningDataModule):
         self.config = config
         self.transform = transforms.Compose([
             transforms.Normalize(CINIC_MEAN, CINIC_STD),
+            transforms.Resize(config.input_size[1:]),
         ])
         train_transform_list = []
 
@@ -78,10 +79,10 @@ class CINICDataModule(pl.LightningDataModule):
             for i, c in enumerate(self.config.classes):
                 y[y == -CLASS_NAMES.index(c) - 1] = i
 
-        if is_train:
-            x = self.train_transform(x)
-        else:
-            x = self.transform(x)
+        #if is_train:
+        #    x = self.train_transform(x)
+        #else:
+        #    x = self.transform(x)
 
         return TensorDataset(x, y)
 
@@ -101,15 +102,17 @@ class CINICDataModule(pl.LightningDataModule):
     # we define a separate DataLoader for each of train/val/test
     def train_dataloader(self):
         def collate_fn(batch):
+            X, y = default_collate(batch)
+            X = self.train_transform(X)
             if self.config.cutmix_add == "cut":
                 return transforms.CutMix(
                     num_classes=self.config.num_classes
-                )(*default_collate(batch))
+                )(X, y)
             if self.config.cutmix_add == "mix":
                 return transforms.MixUp(
                     num_classes=self.config.num_classes
-                )(*default_collate(batch))
-            return default_collate(batch)
+                )(X, y)
+            return X, y
 
         cinic_train = DataLoader(
             self.cinic_train,
@@ -121,17 +124,27 @@ class CINICDataModule(pl.LightningDataModule):
         return cinic_train
 
     def val_dataloader(self):
+        def collate_fn(batch):
+            X, y = default_collate(batch)
+            X = self.transform(X)
+            return X, y
         cinic_val = DataLoader(
             self.cinic_val,
             batch_size=10 * self.config.batch_size,
             num_workers=4,
+            collate_fn=collate_fn,
         )
         return cinic_val
 
     def test_dataloader(self):
+        def collate_fn(batch):
+            X, y = default_collate(batch)
+            X = self.transform(X)
+            return X, y
         cinic_test = DataLoader(
             self.cinic_test,
             batch_size=10 * self.config.batch_size,
             num_workers=4,
+            collate_fn=collate_fn,
         )
         return cinic_test

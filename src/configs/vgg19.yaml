@@ -15,7 +15,7 @@ parameters:
   activation:
     value: ReLU
   batch_size:
-    value: 1024
+    value: 64
   model_class:
     value: VGG
   learning_rate:
@@ -29,7 +29,11 @@ parameters:
   optimizer:
     value: Adam
   random_crop_add:
-    value: false
+    value: true
+  random_crop_scale:
+    value: 0
+  random_crop_ratio:
+    value: 0
   random_flip_add:
     value: false
   random_rotation_add:
