@@ -1,5 +1,5 @@
 name: ensemble_mammals
-method: random
+method: bayes
 metric:
   goal: minimize
   name: valid_best/loss

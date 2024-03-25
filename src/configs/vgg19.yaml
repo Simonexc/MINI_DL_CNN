@@ -11,7 +11,7 @@ parameters:
   num_classes:
     value: 10
   input_size:
-    value: [3, 32, 32]
+    value: [3, 224, 224]
   activation:
     value: ReLU
   batch_size:

@@ -106,7 +106,7 @@ parameters:
   random_flip_prob:
     value: 0.5
   random_rotation_add:
-    value: true
+    value: false
   random_rotation_degrees:
     value: 30
   random_color_jitter_add:

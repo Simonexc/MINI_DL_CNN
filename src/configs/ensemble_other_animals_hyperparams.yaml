@@ -1,5 +1,5 @@
 name: ensemble_other_animals_hyperparameters
-method: random
+method: bayes
 metric:
   goal: minimize
   name: valid_best/loss

@@ -1,5 +1,5 @@
 name: ensemble_vehicles_hyperparameters
-method: random
+method: bayes
 metric:
   goal: minimize
   name: valid_best/loss
@@ -81,7 +81,7 @@ parameters:
       - name: dropout
       - name: fc
         in_features: 128
-        out_features: 4
+        out_features: 3
         add_activation: false
   learning_rate:
     distribution: log_uniform_values
