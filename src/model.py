@@ -291,13 +291,13 @@ class NetBase(pl.LightningModule):
             "cpu")
         self.logger.experiment.log(
             {"test/roc": wandb.plot.roc_curve(flattened_true_values,
-                                               flattened_probabilities, labels=CLASS_NAMES)}
+                                               flattened_probabilities, labels=getattr(self.config, "classes", None) or CLASS_NAMES)}
         )
         #self.logger.experiment.log(
         #   {"test/confusion_matrix": wandb.sklearn.plot_confusion_matrix(flattened_true_values.numpy().tolist(), torch.argmax(flattened_probabilities, dim=1).numpy().tolist(), CLASS_NAMES)}
         #)
         self.logger.experiment.log(
-            {"test/confusion_matrix": wandb.plot.confusion_matrix(probs=flattened_probabilities, y_true=flattened_true_values.numpy().tolist(), class_names=CLASS_NAMES)}
+            {"test/confusion_matrix": wandb.plot.confusion_matrix(probs=flattened_probabilities, y_true=flattened_true_values.numpy().tolist(), class_names=getattr(self.config, "classes", None) or CLASS_NAMES)}
         )
 
     def on_validation_epoch_end(self):

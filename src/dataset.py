@@ -6,7 +6,7 @@ import torch
 import lightning.pytorch as pl
 import torch.nn.functional as F
 
-from settings import CINIC_STD, CINIC_MEAN
+from settings import CINIC_STD, CINIC_MEAN, CLASS_NAMES
 
 
 class CINICDataModule(pl.LightningDataModule):
@@ -67,6 +67,17 @@ class CINICDataModule(pl.LightningDataModule):
     def _read(self, split, is_train: bool = False):
         filename = split + ".pt"
         x, y = torch.load(os.path.join(self.data_dir, filename))
+        if getattr(self.config, "classes", None):
+            y = -y - 1
+            for i, c in enumerate(CLASS_NAMES):
+                if c not in self.config.classes:
+                    rows = y != -i - 1
+                    x = x[rows]
+                    y = y[rows]
+
+            for i, c in enumerate(self.config.classes):
+                y[y == -CLASS_NAMES.index(c) - 1] = i
+            print(torch.min(y))
         if is_train:
             x = self.train_transform(x)
         else:
