@@ -401,3 +401,15 @@ class DenseNet(NetBase):
         self.model.classifier = nn.Linear(
             1024, config.num_classes
         )
+
+
+class Ensemble(NetBase, ConstructModelMixin):
+    def __init__(self, config, models):
+        super().__init__(config, save_onnx=False, upload_checkpoints=False)
+
+        self.model = self._construct_model(config.model)
+        self.models = models
+
+    def forward(self, x):
+        outputs = [model(x) for model in self.models]
+        return super().forward(torch.cat(outputs, dim=1))

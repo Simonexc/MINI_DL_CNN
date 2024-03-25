@@ -1,0 +1,60 @@
+name: ensemble
+method: random
+metric:
+  goal: minimize
+  name: valid_best/loss
+parameters:
+  model_name:
+    value: ensemble
+  model_class:
+    value: Ensemble
+  epochs:
+    value: 60
+  num_classes:
+    value: 10
+  input_size:
+    value: [3, 32, 32]
+  activation:
+    value: ReLU
+  batch_size:
+    value: 1024
+  model:
+    value:
+      - name: fc
+        in_features: 18
+        out_features: 10
+        add_activation: false
+  learning_rate:
+    value: 0.001
+  beta1:
+    value: 0.9
+  beta2:
+    value: 0.999
+  l2_penalty:
+    value: 0
+  dropout:
+    value: 0.4
+  batch_norm:
+    value: true
+  optimizer:
+    value: Adam
+  random_crop_add:
+    value: false
+  random_crop_scale:
+    value: 0.2
+  random_crop_ratio:
+    value: 0.2
+  random_flip_add:
+    value: false
+  random_flip_prob:
+    value: 0.5
+  random_rotation_add:
+    value: false
+  random_rotation_degrees:
+    value: 30
+  random_color_jitter_add:
+    value: false
+  random_gaussian_blur_add:
+    value: false
+  cutmix_add:
+    value: none

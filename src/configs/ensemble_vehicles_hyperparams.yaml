@@ -81,7 +81,7 @@ parameters:
       - name: dropout
       - name: fc
         in_features: 128
-        out_features: 3
+        out_features: 4
         add_activation: false
   learning_rate:
     distribution: log_uniform_values
